@@ -15,8 +15,8 @@ paginate = 5
 
 [languages]
   [languages.en]
-    title = "Hello Friend"
-    subtitle = "A simple theme for Hugo"
+    title = "winsnes.io$ Hello World"
+    subtitle = "A simple blog about IT and Cloud"
     keywords = ""
     copyright = ""
     menuMore = "Show more"
@@ -30,7 +30,7 @@ paginate = 5
     dateFormatList = "2006-01-02"
 
     [languages.en.params.logo]
-      logoText = "hello friend"
+      logoText = "winsnes.io$ Hello World"
       logoHomeLink = "/"
     # or
     #
