@@ -5,3 +5,6 @@ deploy:
 	-out plan.out
 	terraform apply -auto-approve plan.out
 	
+tfinit:
+	terraform init \
+	--backend-config="path=.tfstate/terraform.tfstate"
