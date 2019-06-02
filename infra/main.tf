@@ -18,6 +18,14 @@ variable "google_project" {
   type = "string"
 }
 
+variable "root_domain" {
+  type = "string"
+}
+
+variable "sub_domain" {
+  type = "string"
+}
+
 ################################################################################
 # Providers
 ################################################################################
@@ -31,7 +39,7 @@ provider "google" {
 # Resources
 ################################################################################
 resource "google_storage_bucket" "static-store" {
-  name     = "www.winsnes.io"
+  name     = "${length(var.sub_domain) == 0 ? var.root_domain : join(".",list(var.sub_domain, var.root_domain))}"
   location = "US"
 
   website {
@@ -52,11 +60,54 @@ resource "google_storage_bucket_acl" "static-store-default" {
   ]
 }
 
+resource "google_compute_global_forwarding_rule" "default" {
+  name       = "winsnesio-global-forwarding-rule"
+  target     = "${google_compute_target_http_proxy.default.self_link}"
+  port_range = "80"
+  depends_on = ["google_compute_target_http_proxy.default"]
+}
+
+resource "google_compute_target_http_proxy" "default" {
+  name        = "winsnesio-http-proxy"
+  description = "Http proxy for winsnes.io"
+  url_map     = "${google_compute_url_map.default.self_link}"
+}
+
+resource "google_compute_url_map" "default" {
+  name            = "winsnesio-url-map"
+  description     = "Url map for winsnes.io blog"
+  default_service = "${google_compute_backend_bucket.static_storage.self_link}"
+
+  host_rule {
+    hosts        = ["${var.root_domain}"]
+    path_matcher = "allpaths"
+  }
+
+  path_matcher {
+    name            = "allpaths"
+    default_service = "${google_compute_backend_bucket.static_storage.self_link}"
+
+    path_rule {
+      paths   = ["/*"]
+      service = "${google_compute_backend_bucket.static_storage.self_link}"
+    }
+  }
+}
+
+resource "google_compute_backend_bucket" "static_storage" {
+  name = "storage-backend-bucket"
+  bucket_name = "${google_storage_bucket.static-store.name}"
+}
+
 ################################################################################
 # Outputs
 ################################################################################
 output "bucket_link" {
   value = "${google_storage_bucket.static-store.self_link}"
+}
+
+output "lb_link" {
+  value = "${google_compute_global_forwarding_rule.default.ip_address}"
 }
 
 ################################################################################
