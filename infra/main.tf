@@ -60,11 +60,17 @@ resource "google_storage_bucket_acl" "static-store-default" {
   ]
 }
 
-resource "google_compute_global_forwarding_rule" "default" {
-  name       = "winsnesio-global-forwarding-rule"
+resource "google_compute_global_forwarding_rule" "ipv4-http" {
+  name       = "winsnesio-http-global-forwarding-rule-ipv4"
   target     = "${google_compute_target_http_proxy.default.self_link}"
   port_range = "80"
-  depends_on = ["google_compute_target_http_proxy.default"]
+}
+
+resource "google_compute_global_forwarding_rule" "ipv6-http" {
+  name = "winsnesio-http-global-forwarding-rule-ipv6"
+  target = "${google_compute_target_http_proxy.default.self_link}"
+  port_range = "80"
+  ip_version = "IPV6"
 }
 
 resource "google_compute_target_http_proxy" "default" {
@@ -107,7 +113,11 @@ output "bucket_link" {
 }
 
 output "lb_link" {
-  value = "${google_compute_global_forwarding_rule.default.ip_address}"
+  value = "${google_compute_global_forwarding_rule.ipv4-http.ip_address}"
+}
+
+output "lb_link_ipv6" {
+  value = "${google_compute_global_forwarding_rule.ipv6-http.ip_address}"
 }
 
 ################################################################################
